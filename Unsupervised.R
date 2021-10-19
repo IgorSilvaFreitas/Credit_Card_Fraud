@@ -50,6 +50,5 @@ factoextra::fviz_cluster(base_kmeans, data= training)
 list <- as.data.frame(base_kmeans$cluster)
 
 
-
 ##Verifying accuracy
 factoextra::fviz_cluster(base_kmeans, data= testing)
