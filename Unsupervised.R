@@ -1,9 +1,8 @@
 
+setwd("C:/Users/Igor/Documents/GitHub/Credit_Card_Fraud")
 base <- readr::read_csv("creditcard.csv")
 
 
-##Time variable should not interfere in the model, so it will be deleted
-base <- base[,-1]
 
 
 ## graph and modifying of Amount variable to be similar to others
@@ -19,36 +18,36 @@ g1 <- base |>
 
 plotly::ggplotly(g1)
 
-preproc <- caret::preProcess(base[,29], method=c("center", "scale","YeoJohnson"))
+preproc <- caret::preProcess(base[,c(1,30)], method=c("pca"))
 base <- predict(preproc, base)
 
 
-
-## splitting sample
-train <- caret::createDataPartition(base$Class, p=0.75, list = F)
-training <- base[train,]
-testing <- base[-train,]
+## Excluindo variável resposta
+fraud <- base[,29]
+base <- base[,-29]
 
 
 ##Scale
-training <- scale(training)
-testing <- scale(testing)
+base <- scale(base)
+
 
 ##best cluster quantity
-factoextra::fviz_nbclust(training, kmeans, method="gap_stat")
+factoextra::fviz_nbclust(base, kmeans, method="gap_stat")
 
 
 ##Generating kmeans classifier
-base_kmeans <- kmeans(training, 4)
+base_kmeans <- kmeans(base, centers=4, nstart = 1000)
 
 
 ##Graph to visualization
-factoextra::fviz_cluster(base_kmeans, data= training)
+factoextra::fviz_cluster(base_kmeans, data= base)
 
 
 ##List with clusters
 list <- as.data.frame(base_kmeans$cluster)
+list$fraud <- fraud
+table(list)
 
-
-##Verifying accuracy
-factoextra::fviz_cluster(base_kmeans, data= testing)
+## confusion matrix
+table(fraud ,base_kmeans$cluster)
+# clusters couldn't separate frauds and no frauds

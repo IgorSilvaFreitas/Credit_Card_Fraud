@@ -1,0 +1,95 @@
+
+```{r}
+base <- readr::read_csv("creditcard.csv")
+```
+
+```{r}
+## Realizando PCA para as variáveis time e transaction amount
+preproc <- caret::preProcess(base[,c(1,30)], method=c("pca"))
+base <- predict(preproc, base)
+```
+
+```{r}
+## verificando dados faltantes
+naniar::gg_miss_var(base)
+```
+```{r}
+## Separando em amostras treino e teste
+base$Class <- as.factor(base$Class)
+sep <- caret::createDataPartition(base$Class, p=0.75, list=F)
+treino <- base[sep,]
+teste <- base[-sep,]
+```
+
+```{r}
+## Balanceamento da amostra treino
+treino <- caret::downSample(x=treino[,-29],y=as.factor(treino[,29]), list= F)
+
+```
+
+```{r}
+## Construção do modelo SVM Linear
+set.seed(100)
+controle <- caret::trainControl(method = "repeatedcv", number = 10, repeats= 3)
+
+modelo_svm <- caret::train(Class~ ., data=treino, method="svmLinear",trControl=controle)
+
+
+
+#Aplicando o modelo na amostra Teste
+preditor <- predict(modelo_svm, teste)
+
+#Estimando o erro fora da amostra
+cm <- caret::confusionMatrix(preditor,teste$Class)
+cm$overall[1]
+cm$byClass[1]
+cm$byClass[2]
+cm$byClass[7]
+
+```
+
+```{r}
+## Construção do modelo xgboost
+set.seed(100)
+controle <- caret::trainControl(method = "repeatedcv", number = 10, repeats= 3)
+
+modelo_xgb <- caret::train(Class~ ., data=treino, method="xgbLinear",trControl=controle)
+
+
+
+#Aplicando o modelo na amostra Teste
+preditor2 <- predict(modelo_xgb, teste)
+
+#Estimando o erro fora da amostra
+cm2 <- caret::confusionMatrix(preditor2,teste$Class)
+cm2$overall[1]
+cm2$byClass[1]
+cm2$byClass[2]
+cm2$byClass[7]
+
+```
+
+```{r}
+## Construção do modelo randomforest
+set.seed(100)
+controle <- caret::trainControl(method = "repeatedcv", number = 10, repeats= 3)
+
+modelo_rf <- caret::train(Class~ ., data=treino, method="rf",trControl=controle)
+
+
+
+#Aplicando o modelo na amostra Teste
+preditor3 <- predict(modelo_rf, teste)
+
+#Estimando o erro fora da amostra
+cm3 <- caret::confusionMatrix(preditor3,teste$Class)
+cm3$overall[1]
+cm3$byClass[1]
+cm3$byClass[2]
+cm3$byClass[7]
+
+```
+
+
+O melhor modelo foi o randomforest, possuindo um tempo de realização maior que o support vector machine, porém menor que o xgboost, e ainda possuindo melhores métricas para recall, acurácia e F1
+
